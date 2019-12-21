@@ -201,7 +201,7 @@ function_AliDDNS_GetConfig(){
     if [ "${configCounts}" = "0" ]; then
         echo -e "${Font_SkyBlue}当前无配置文件，请先配置环境！"
     else       
-        echo -e "${Font_SkyBlue}找到$configCounts个配置文件，请选择："
+        echo -e "${Font_SkyBlue}找到$configCounts个配置文件"
         find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg" -print
         echo -e "\n"       
     fi
@@ -355,7 +355,17 @@ function_updateConfig_input(){
 function_setConfig(){
     AliDDNS_Config_Path="/etc/OneKeyAliDDNS/config${AliDDNS_Config_id}.cfg"
 }
-
+function_selectConfig(){
+    function_AliDDNS_GetConfig
+    echo -e "请选择配置，输入配置文件的数字(即ID):"
+    read -p ":" sid 
+    while [ -z $sid ]; do
+        echo -e "请选择配置，输入配置文件的数字(即ID):"
+        read -p ":" sid 
+    done
+    AliDDNS_Config_id=$sid
+    function_setConfig
+}
 function_AliDDNS_SetConfig(){
     # AliDDNS_DomainName
     if [ "${AliDDNS_DomainName}" = "" ]; then
@@ -1021,7 +1031,7 @@ main(){
     read -p "输入数字以选择:" Function
 
     if [ "${Function}" == "1" ]; then
-        
+        function_selectConfig
         Entrance_AliDDNS_RunOnly
     elif [ "${Function}" == "2" ]; then
         function_newConfig
