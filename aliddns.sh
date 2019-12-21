@@ -950,9 +950,10 @@ Function_Crontab(){
     if [ ! -e /var/spool/cron/ ];then
         mkdir -p /var/spool/cron/
     fi
-    echo $crule $(readlink -f "$0") -r $cid >> /etc/crontab
-    echo -e "定时任务$crule $(readlink -f "$0") 已添加到 /etc/crontab"
-
+    #echo $crule $(readlink -f "$0") -r $cid root >> /etc/crontab
+    #echo -e "定时任务$crule $(readlink -f "$0") 已添加到 /etc/crontab"
+    echo -e "(暂停功能)"
+    crule=""
     echo -e "${Font_Suffix}"
 }
 function_AliDDNS_showHelp(){
@@ -963,6 +964,7 @@ function_AliDDNS_showHelp(){
         aliddns -a          添加配置
         aliddns -clean      清理配置文件及运行环境
         aliddns -v          显示版本信息
+        aliddns -auto       设置定时任务
         ${Font_Suffix}"
 
 }
