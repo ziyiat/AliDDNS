@@ -50,6 +50,8 @@ ServerChan_Content=""
 #配置选择
 AliDDNS_Config_id=""
 AliDDNS_Config_Path="/etc/OneKeyAliDDNS/config.cfg"
+id_remove=""
+id_update=""
 
 # Shell脚本信息显示
 function_showInfo(){
@@ -64,6 +66,7 @@ echo -e "${Font_Green}
 # 网站：       https://zzmh.net                             #
 # 邮箱：       zzmh@zzmh.net                                #   
 # 支持配置多个域名，支持“@”和“*”的二级域名设置              #
+# 使用 aliddns -h 获取帮助                                  #
 #===========================================================#${Font_suffix}"
 }
 
@@ -184,7 +187,7 @@ function_AliDDNS_CheckConfig(){
         if [ "${AliDDNS_DomainName}" = "" ] || [ "${AliDDNS_SubDomainName}" = 0 ] || [ "${AliDDNS_TTL}" = "" ] \
                 || [ "${AliDDNS_AK}" = "" ] || [ "${AliDDNS_SK}" = "" ] || [ "${AliDDNS_LocalIP}" = "" ] \
                 || [ "${AliDDNS_DomainServerIP}" = "" ]; then
-            echo  "${Msg_Error}配置文件有误，请检查配置文件，或者建议清理环境后重新配置 !"
+            echo -e "${Msg_Error}配置文件有误，请检查配置文件，或者建议清理环境后重新配置 !"
             exit 1
         fi
         Switch_AliDDNS_Config_Exist="1"
@@ -205,7 +208,7 @@ function_AliDDNS_GetConfig(){
 }
 function_newConfig(){
     echo -e "\n【添加配置】\n"
-    echo -e `find /etc/OneKeyAliDDNS -name "config*.cfg"`
+    find /etc/OneKeyAliDDNS -name "config*.cfg"
     read -p "请输入要设置的配置ID（数字）：" Config_id
     while [ -z "${Config_id}" ]
     do
@@ -227,14 +230,20 @@ function_newConfig(){
 }
 function_removeConfig(){
     echo -e "\n【删除配置】\n"
-    echo -e "存在以下配置文件,配置文件中数字id"
-    echo -e `find /etc/OneKeyAliDDNS -name "config*.cfg"`
-    read -p "输入删除配置的ID：" rid
-    while [ -z "${rid}" ]
-    do
-        echo -e "${Msg_Error}此项不可为空，请重新填写"
-        read -p "${Msg_Info}输入删除配置的ID：" rid
-    done
+    rid=$id_remove
+    id_remove=""
+    if [ -z $rid ]; then
+        echo -e "存在以下配置文件,配置文件中数字id"
+        find /etc/OneKeyAliDDNS -name "config*.cfg"
+        read -p "输入删除配置的ID：" rid
+        while [ -z "${rid}" ]
+        do
+            echo -e "${Msg_Error}此项不可为空，请重新填写"
+            read -p "${Msg_Info}输入删除配置的ID：" rid
+        done
+    fi
+    
+    
     if [ -f "/etc/OneKeyAliDDNS/config${rid}.cfg" ]; then
         confirm=""
         while [ -z "${confirm}" ] 
@@ -243,9 +252,9 @@ function_removeConfig(){
             read -p "[y/n]：" confirm
             echo -e "${Font_Suffix}"
             if [ "$confirm" == 'y' ]; then
-                echo "${Msg_Info}已确认删除"
+                echo -e "${Msg_Info}已确认删除"
             elif [ "$confirm" == 'n' ]; then
-                echo "${Msg_Info}取消删除"
+                echo -e "${Msg_Info}取消删除"
             else
                 confirm=""
             fi
@@ -262,14 +271,19 @@ function_removeConfig(){
 }
 function_updateConfig(){
     echo -e "\n【修改配置】\n"
-    echo -e "存在以下配置文件,配置文件中数字id"
-    echo -e `find /etc/OneKeyAliDDNS -name "config*.cfg"`
-    read -p "输入要修改配置的ID：" uid
-    while [ -z "${uid}" ]
-    do
-        echo -e "${Msg_Error}此项不可为空，请重新填写"
-        read -p "${Msg_Info}输入删除配置的ID：" uid
-    done
+    uid=$id_update
+    id_update=""
+    if [ -z $uid ]; then
+        echo -e "存在以下配置文件,配置文件中数字id"
+        find /etc/OneKeyAliDDNS -name "config*.cfg"
+        read -p "输入要修改配置的ID：" uid
+        while [ -z "${uid}" ]
+        do
+            echo -e "${Msg_Error}此项不可为空，请重新填写"
+            read -p "${Msg_Info}输入删除配置的ID：" uid
+        done
+    fi
+    
     if [ -f "/etc/OneKeyAliDDNS/config${uid}.cfg" ]; then
         AliDDNS_Config_id="${uid}"
         AliDDNS_Config_Path="/etc/OneKeyAliDDNS/config${AliDDNS_Config_id}.cfg"
@@ -709,7 +723,7 @@ function_AliDDNS_CleanEnviroment(){
 }
 
 function_AliDDNS_ShowVersion(){
-    echo -e "${BuildTime}"
+    echo -e "version: ${BuildTime}"
     exit 0
 }
 
@@ -894,33 +908,87 @@ Function_Main(){
         exit 0
     fi
 }
+
+
+Function_Crontab(){
+    #设置定时任务
+    echo -e "${Font_Yellow}"
+    find /etc/OneKeyAliDDNS -name "config*.cfg"
+    while ([ -z $cid ] || [[ ! $cid =~ (^[0-9]*$) ]]); do
+        read -p "选择需要定时执行的配置：" cid
+    done
+    regx="(((^([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|^([0-9]|[0-5][0-9]) |^(\\* ))((([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|([0-9]|[0-5][0-9]) |(\\* ))((([0-9]|[01][0-9]|2[0-3])(\\,|\\-|\\/){1}([0-9]|[01][0-9]|2[0-3]) )|([0-9]|[01][0-9]|2[0-3]) |(\\* ))((([0-9]|[0-2][0-9]|3[01])(\\,|\\-|\\/){1}([0-9]|[0-2][0-9]|3[01]) )|(([0-9]|[0-2][0-9]|3[01]) )|(\\? )|(\\* )|(([1-9]|[0-2][0-9]|3[01])L )|([1-7]W )|(LW )|([1-7]\\#[1-4] ))((([1-9]|0[1-9]|1[0-2])(\\,|\\-|\\/){1}([1-9]|0[1-9]|1[0-2]) )|([1-9]|0[1-9]|1[0-2]) |(\\* ))(([1-7](\\,|\\-|\\/){1}[1-7])|([1-7])|(\\?)|(\\*)|(([1-7]L)|([1-7]\\#[1-4]))))|(((^([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|^([0-9]|[0-5][0-9]) |^(\\* ))((([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|([0-9]|[0-5][0-9]) |(\\* ))((([0-9]|[01][0-9]|2[0-3])(\\,|\\-|\\/){1}([0-9]|[01][0-9]|2[0-3]) )|([0-9]|[01][0-9]|2[0-3]) |(\\* ))((([0-9]|[0-2][0-9]|3[01])(\\,|\\-|\\/){1}([0-9]|[0-2][0-9]|3[01]) )|(([0-9]|[0-2][0-9]|3[01]) )|(\\? )|(\\* )|(([1-9]|[0-2][0-9]|3[01])L )|([1-7]W )|(LW )|([1-7]\\#[1-4] ))((([1-9]|0[1-9]|1[0-2])(\\,|\\-|\\/){1}([1-9]|0[1-9]|1[0-2]) )|([1-9]|0[1-9]|1[0-2]) |(\\* ))(([1-7](\\,|\\-|\\/){1}[1-7] )|([1-7] )|(\\? )|(\\* )|(([1-7]L )|([1-7]\\#[1-4]) ))((19[789][0-9]|20[0-9][0-9])\\-(19[789][0-9]|20[0-9][0-9])))"
+    while ([ -z "${crule}" ] || [[ ! $crule =~ $regx ]])
+    do
+        read -p "输入定时规则：" crule
+        if [[ $crule =~ $regx ]]; then
+            #statements
+            echo "ok"
+        else
+            echo -e "${Msg_Error}定时规则输入有误，请检查!"
+        fi
+    done
+    
+    if [ ! -e /var/spool/cron/ ];then
+        mkdir -p /var/spool/cron/
+    fi
+    echo $crule $(readlink -f "$0") >> /var/spool/cron/root
+    echo -e "定时任务$crule $(readlink -f "$0") 已添加到 /var/spool/cron/root"
+
+    echo -e "${Font_Suffix}"
+}
 function_AliDDNS_showHelp(){
         echo -e "${Font_Suffix}使用方法 (Usage)：
-aliddns -r id       根据ID运行配置 id为数字     eg:aliddns -run 1
-aliddns -u id       根据ID修改配置 id为数字     eg:aliddns -u 1
-aliddns -d id       根据ID删除配置 id为数字     eg:aliddnd -d 1
-aliddns -clean      清理配置文件及运行环境
-aliddns -v          显示版本信息
-${Font_Suffix}"
+        aliddns -r id       根据ID运行配置 id为数字     eg:aliddns -run 1
+        aliddns -u id       根据ID修改配置 id为数字     eg:aliddns -u 1
+        aliddns -d id       根据ID删除配置 id为数字     eg:aliddnd -d 1
+        aliddns -a          添加配置
+        aliddns -clean      清理配置文件及运行环境
+        aliddns -v          显示版本信息
+        ${Font_Suffix}"
 
 }
-
-
+function_showInfo
 case "$1" in
-    -run)
-        if [ "$2" = "0"]; then
+    -r)
+        if [ "$2" = "" ]; then
+            echo -e "${Msg_Error} aliddns -r [id] 格式错误"
             function_AliDDNS_showHelp
             exit 0
         fi
         AliDDNS_Config_id=$2
         function_setConfig
         Entrance_AliDDNS_RunOnly
-        ;;
-    -config)
-        Entrance_AliDDNS_ConfigureOnly
         exit 0
         ;;
-    -clean)
+    -u)
+        if [ "$2" = "" ]; then
+            echo -e "${Msg_Error} aliddns -u [id] 格式错误"
+            function_AliDDNS_showHelp
+            exit 0
+        fi
+        AliDDNS_Config_id=$2
+        function_setConfig
+        function_updateConfig
+        exit 0
+        ;;
+    -d)
+        if [ "$2" = "" ]; then
+            echo -e "${Msg_Error} aliddns -d [id] 格式错误"
+            function_AliDDNS_showHelp
+            exit 0
+        fi
+        AliDDNS_Config_id=$2
+        id_remove=$2
+        function_setConfig
+        function_removeConfig
+        exit 0
+        ;;
+    -a)
+        function_newConfig
+        exit 0
+        ;;
+    -clen)
         Entrance_Global_CleanEnv
         exit 0
         ;;
@@ -929,8 +997,11 @@ case "$1" in
         exit 0
         ;;
     -h)
-        function_showInfo
         function_AliDDNS_showHelp
+        exit 0
+        ;;
+    -auto)
+        Function_Corntab
         exit 0
         ;;
 esac
@@ -938,7 +1009,7 @@ main(){
     echo -e "${Font_suffix}"
     function_AliDDNS_GetConfig
     echo -e "${Msg_Info}操作选择："
-    echo -e " 1.选择操作的配置 \n 2.添加配置 \n 3.删除配置 \n 4.修改配置 \n 5.ServerChan设置 \n 6.清除所有配置 \n 0.退出"
+    echo -e " 1.选择操作的配置 \n 2.添加配置 \n 3.删除配置 \n 4.修改配置 \n 5.ServerChan设置 \n 6.清除所有配置 \n 7.添加定时任务 \n 0.退出"
     read -p "输入数字以选择:" Function
 
     if [ "${Function}" == "1" ]; then
@@ -954,7 +1025,9 @@ main(){
         Entrance_ServerChan_Config
     elif [ "${Function}" == "6" ]; then
         Entrance_Global_CleanEnv
-    else
+    elif [ "${Function}" == "7" ]; then
+        Function_Crontab
+    elif [ "${Function}" == "0" ]; then
         exit 0
     fi
     main
