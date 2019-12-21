@@ -15,7 +15,7 @@
 
 
 【安装】
-./install.sh
+bash install.sh
 
 【使用】
 aliddns 			启动工具

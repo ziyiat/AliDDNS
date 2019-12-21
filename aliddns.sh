@@ -197,18 +197,18 @@ function_AliDDNS_CheckConfig(){
 }
 
 function_AliDDNS_GetConfig(){
-    configCounts=`find /etc/OneKeyAliDDNS -name "config*.cfg" | wc -l`
+    configCounts=`find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg" | wc -l`
     if [ "${configCounts}" = "0" ]; then
         echo -e "${Font_SkyBlue}当前无配置文件，请先配置环境！"
     else       
         echo -e "${Font_SkyBlue}找到$configCounts个配置文件，请选择："
-        find /etc/OneKeyAliDDNS -name "config*.cfg" -print
+        find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg" -print
         echo -e "\n"       
     fi
 }
 function_newConfig(){
     echo -e "\n【添加配置】\n"
-    find /etc/OneKeyAliDDNS -name "config*.cfg"
+    find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg"
     read -p "请输入要设置的配置ID（数字）：" Config_id
     while [ -z "${Config_id}" ]
     do
@@ -234,7 +234,7 @@ function_removeConfig(){
     id_remove=""
     if [ -z $rid ]; then
         echo -e "存在以下配置文件,配置文件中数字id"
-        find /etc/OneKeyAliDDNS -name "config*.cfg"
+        find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg"
         read -p "输入删除配置的ID：" rid
         while [ -z "${rid}" ]
         do
@@ -275,7 +275,7 @@ function_updateConfig(){
     id_update=""
     if [ -z $uid ]; then
         echo -e "存在以下配置文件,配置文件中数字id"
-        find /etc/OneKeyAliDDNS -name "config*.cfg"
+        find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg"
         read -p "输入要修改配置的ID：" uid
         while [ -z "${uid}" ]
         do
@@ -908,31 +908,39 @@ Function_Main(){
         exit 0
     fi
 }
-
-
+#"10 * * * * /usr/sbin/aliddns -r 5" >> /etc/crontab
 Function_Crontab(){
     #设置定时任务
     echo -e "${Font_Yellow}"
-    find /etc/OneKeyAliDDNS -name "config*.cfg"
+    find /etc/OneKeyAliDDNS -name "config[0-9]*.cfg"
     while ([ -z $cid ] || [[ ! $cid =~ (^[0-9]*$) ]]); do
         read -p "选择需要定时执行的配置：" cid
     done
-    regx="(((^([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|^([0-9]|[0-5][0-9]) |^(\\* ))((([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|([0-9]|[0-5][0-9]) |(\\* ))((([0-9]|[01][0-9]|2[0-3])(\\,|\\-|\\/){1}([0-9]|[01][0-9]|2[0-3]) )|([0-9]|[01][0-9]|2[0-3]) |(\\* ))((([0-9]|[0-2][0-9]|3[01])(\\,|\\-|\\/){1}([0-9]|[0-2][0-9]|3[01]) )|(([0-9]|[0-2][0-9]|3[01]) )|(\\? )|(\\* )|(([1-9]|[0-2][0-9]|3[01])L )|([1-7]W )|(LW )|([1-7]\\#[1-4] ))((([1-9]|0[1-9]|1[0-2])(\\,|\\-|\\/){1}([1-9]|0[1-9]|1[0-2]) )|([1-9]|0[1-9]|1[0-2]) |(\\* ))(([1-7](\\,|\\-|\\/){1}[1-7])|([1-7])|(\\?)|(\\*)|(([1-7]L)|([1-7]\\#[1-4]))))|(((^([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|^([0-9]|[0-5][0-9]) |^(\\* ))((([0-9]|[0-5][0-9])(\\,|\\-|\\/){1}([0-9]|[0-5][0-9]) )|([0-9]|[0-5][0-9]) |(\\* ))((([0-9]|[01][0-9]|2[0-3])(\\,|\\-|\\/){1}([0-9]|[01][0-9]|2[0-3]) )|([0-9]|[01][0-9]|2[0-3]) |(\\* ))((([0-9]|[0-2][0-9]|3[01])(\\,|\\-|\\/){1}([0-9]|[0-2][0-9]|3[01]) )|(([0-9]|[0-2][0-9]|3[01]) )|(\\? )|(\\* )|(([1-9]|[0-2][0-9]|3[01])L )|([1-7]W )|(LW )|([1-7]\\#[1-4] ))((([1-9]|0[1-9]|1[0-2])(\\,|\\-|\\/){1}([1-9]|0[1-9]|1[0-2]) )|([1-9]|0[1-9]|1[0-2]) |(\\* ))(([1-7](\\,|\\-|\\/){1}[1-7] )|([1-7] )|(\\? )|(\\* )|(([1-7]L )|([1-7]\\#[1-4]) ))((19[789][0-9]|20[0-9][0-9])\\-(19[789][0-9]|20[0-9][0-9])))"
-    while ([ -z "${crule}" ] || [[ ! $crule =~ $regx ]])
+    #regex="(^([0-59]{1,2})|\\* ([0-24]{1,2})|\\* ([0-31]{1,2})|\\* ([1-12]{1,2})|\\* ([1-7])|\\*$)"
+    #while ([ -z "${crule}" ] || [[ ! $crule =~ $regex ]])
+
+    while [ -z "${crule}" ] 
     do
-        read -p "输入定时规则：" crule
-        if [[ $crule =~ $regx ]]; then
-            #statements
-            echo "ok"
-        else
-            echo -e "${Msg_Error}定时规则输入有误，请检查!"
-        fi
+        echo -e "
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * 
+# eg: （10 * * * *） 每个小时的第10分钟执行
+
+        "
+        read -p "输入定时规则(不对规则正确与否进行检测，请自行确认)：" crule
     done
     
     if [ ! -e /var/spool/cron/ ];then
         mkdir -p /var/spool/cron/
     fi
-    echo $crule $(readlink -f "$0") >> /var/spool/cron/root
+    echo $crule $(readlink -f "$0") -r $cid >> /var/spool/cron/root
     echo -e "定时任务$crule $(readlink -f "$0") 已添加到 /var/spool/cron/root"
 
     echo -e "${Font_Suffix}"
@@ -1001,7 +1009,7 @@ case "$1" in
         exit 0
         ;;
     -auto)
-        Function_Corntab
+        Function_Crontab
         exit 0
         ;;
 esac
